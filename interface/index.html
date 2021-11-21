@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <!-- Meta tags -->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+
+    <!-- Bootstrap CSS -->
+<link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
+<link rel="stylesheet" href="my.css">
+    <title>D-App</title>
+  </head>
+  <body>
+<div class="container">
+    <h1 class="text-center">D-App</h1>
+    <h2 class="text-center">ETH senden via Smart Contract</h2>
+    <form id="contract-form">
+      <div class="form-group">
+        <label for="Sender Address">Sender:</label>
+        <input type="text" class="form-control" id="fromAddress" aria-describedby="fromAddressHelp" value="0x675B480B468357e4fb4af3B76C1554Dd8D095ad0" required="true">
+        <small id="fromAddressHelp" class="form-text text-muted"></small>
+      </div>
+        <div class="form-group">
+          <label for="Receiver Address">Empfänger:</label>
+          <input value="0x4B3F4A88214c62A2C9979DC938Eb0B8E3aB6CBA1" type="text" class="form-control" id="toAddress" aria-describedby="toAddressHelp" placeholder="Enter the receipient address" required="true" readonly>
+          <small id="toAddressHelp" class="form-text text-muted"></small>
+        </div>
+          <div class="form-group">
+            <label for="Amount">ETH's</label>
+            <input value="2" type="text" class="form-control" id="amount" aria-describedby="amountHelp" placeholder="Amount to send in ETH" required="true">
+            <small id="amountHelp" class="form-text text-muted"></small>
+          </div>
+      <button type="submit" class="btn btn-primary col-md-12">Senden</button>
+      <div id="deposit-result"></div>
+    </form>
+    <hr>
+    <h2>ETH Anfrage:</h2>
+    <div class="form-group">
+      <label for="Anfrage Adreesse">Anfrage Adresse:</label>
+      <input class="form-control" type="text" name="" value="0x4B3F4A88214c62A2C9979DC938Eb0B8E3aB6CBA1" id="contractAddress" readonly>
+      <small id="contractAddress" class="form-text text-muted"></small>
+    </div>
+    <form id="get-balance-form">
+      <button type="submit" class="btn btn-primary col-md-12">Anfrage</button>
+      <div id="the-balance"></div>
+    </form>
+    </div>
+
+    <!-- jQuery, Popper.js, Bootstrap JS -->
+    <script src="web3.min.js"></script>
+    <script src="contractABI.js"></script>
+    <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+    <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
+
+    <script>
+    var contractAddress = '0x4B3F4A88214c62A2C9979DC938Eb0B8E3aB6CBA1';
+    if ( typeof web3 != 'undefined') {
+      web3 = new Web3(web3.currentProvider);
+    } else {
+      web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:8545"));
+    }
+
+    // web3 = new Web3(new Web3.providers.HttpProvider("http://localhost:9545"));
+    var  version = web3.version;
+    console.log("du benutzt web3 version: " + version);
+
+    var SmartContract = new web3.eth.Contract(abi, contractAddress);
+    console.log(SmartContract);
+
+    $('#contract-form').submit(function() {
+      event.preventDefault();
+      var fromAddress = $('#fromAddress').val();
+      var toAddress = $('#toAddress').val();
+      var amount = $('#amount').val();
+      if (web3.utils.isAddress(fromAddress) != true) {
+        alert("Keine korrekte Adresse");
+        return;
+      }
+      if (web3.utils.isAddress(toAddress) != true) {
+        alert("Keine korrekte Adresse");
+        return;
+      }
+      if (amount == 0) {
+        alert("0 ETH's nicht möglich");
+        return;
+      }
+
+      SmartContract.methods.deposit(toAddress).send({from: fromAddress, gas: 100000, value: web3.utils.toWei(amount, "ether")},
+        function(error, result){
+          if (error) {
+            console.log("Fehler: " + error);
+              $("#deposit-result").html("Fehler" + error);
+          } else {
+            $("#deposit-result").html("Erfolgreich: <b>" + result + "</b>");
+          }
+        })
+    });
+
+    $('#get-balance-form').submit(function() {
+      event.preventDefault();
+
+      web3.eth.getBalance(contractAddress,
+        function(error, result) {
+          if (error) {
+            console.log('error: ' + error);
+          } else {
+            console.log('balance:' + result);
+            $('#the-balance').html('<b>Kontostand:</b> ' + web3.utils.fromWei(result));
+          }
+        });
+    });
+
+    </script>
+
+    </body>
+</html>
